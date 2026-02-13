@@ -1,64 +1,87 @@
-# Problem Statement
-How can we maximize incremental conversions [`placing an order`] without wasting incentives on users who would have converted anyway?
+# Uplift Modeling & A/B Testing Simulation
 
-## Solution 
-Design a controlled experimentation framework that first estimates the average impact of a promotion using A/B Testing and then extend to individual level causal inference using Uplift Modeling.
+> [!IMPORTANT]
+> **Project Status: Active / Work in Progress**  
+> This project is currently under active development. The results and models presented below are preliminary and subject to refinement.
 
-## Data
-This dataset is from [UC Irvine Machine Learning](https://archive.ics.uci.edu/dataset/352/online+retail), a well-known open source resource.
+## 📌 Project Overview
 
-- This dataset contains 8 columns and 541,909 rows.
-- Out of which there are 4,060 unique customers.
-- The following is the description of the columns:
-    - InvoiceNo: Invoice number.
-    - StockCode: Stock code.
-    - Description: Description.
-    - Quantity: Quantity.
-    - InvoiceDate: Invoice date.
-    - UnitPrice: Unit price.
-    - CustomerID: Customer ID.
-    - Country: Country.
+**Goal:** Maximize incremental conversions by targeting the *right* customers—those who are persuaded by promotions—while avoiding "Sleeping Dogs" (customers who react negatively to promotions) and "Sure Things" (customers who buy regardless).
 
-** important note : There is no explicit treatment column in the dataset. We will create one. **
+This project simulates an **A/B Test** and implements **Uplift Modeling** (using the T-Learner approach) to estimate the Conditional Average Treatment Effect (CATE). By shifting from traditional "average treatment effect" to "individual treatment effect," we aim to optimize promotional spend and increase overall ROI.
 
-## Feature Engineering
+## 🚀 Key Features & Methodology
 
-- We will create the following features to understand the behavior of the customers from the dataset:
-    - recency_days: Number of days since last purchase.
-    - frequency: Number of purchases.
-    - monetary_funds: Total amount spent.
-    - tenure_days: Number of days since first purchase.
-    - average_order_value: Average amount spent per order.
-    - average_basket_size: Average number of items per order.
-    - total_quantity: Total number of items purchased.
-    - unique_products: Number of unique products purchased.
-    - unique_invoices: Number of unique invoices.
-    - most_common_hour: Most common hour of purchase.
-    - most_common_weekday: Most common weekday of purchase.
-    - last_purchase_month: Last purchase month. 
+*   **A/B Test Simulation:**
+    *   Simulated a randomized controlled trial (RCT) by assigning a binary treatment variable.
+    *   Evaluated the Average Treatment Effect (ATE) using difference-in-means.
+*   **Uplift Modeling (T-Learner):**
+    *   Implemented a **T-Learner** meta-learner using **Logistic Regression**.
+    *   Modeled the control and treatment response functions separately to estimate individual uplift.
+*   **Customer Segmentation:**
+    *   Analyzed "Persuadables," "Sleeping Dogs," "Lost Causes," and "Sure Things" based on predicted uplift.
+*   **Data Processing:**
+    *   Cleaned and preprocessed the [Online Retail Dataset](https://archive.ics.uci.edu/dataset/352/online+retail).
+    *   Engineered RFM (Recency, Frequency, Monetary) features to capture customer behavior.
 
-## Treatment Assignment
-## A/B Test Results
-- The treatment group showed a 0.56% increase in conversion rate compared to the control group.
-- The p-value is 0.73, which is far above the 0.05 threshold, indicating that the treatment has no significant impact on the conversion rate.
-- The overall A/B test shows no significant difference between the treatment and control groups.
+## 📊 Preliminary Results
 
-## Uplift Modeling
-Initially I have performed uplift modeling using the basic T-learner approach using Random Forest.
+### A/B Test Findings
+*   **Conversion Rate Lift:** The treatment group showed a **0.56%** increase in conversion rate compared to the control group.
+*   **Statistical Significance:** The p-value was **0.73**, indicating that the overall average impact of the promotion was *not* statistically significant across the entire population. This highlights the need for targeted (uplift) modeling.
 
-| Decile              | Treatment Rate | Control Rate | Uplift                     |
-|---------------------|----------------|--------------|----------------------------|
-| 0–3 (Low uplift)    | ~0%            | ~100%        | -1.0 (hurt by treatment)   |
-| 4                   | 40%            | 90%          | -0.49                      |
-| 5                   | 85%            | 19%          | +0.66                      |
-| 6–9 (High uplift)   | 100%           | 0%           | +1.0 (benefit from treatment) |
+### Uplift Model Insights (T-Learner)
+We observed heterogeneous treatment effects across customer deciles:
+*   **Sleeping Dogs (Deciles 0-3):** Customers in these segments had a *negative* uplift (approx. -1.0), meaning the promotion actively reduced their likelihood to convert.
+*   **Persuadables (Deciles 5-9):** High positive uplift (up to +1.0), indicating these customers are strong candidates for the promotion.
 
-- Customers in lower uplift deciles (0-4) actually perform worse when treated (sleeping dogs) who would have converted anyway but were negatively impacted by the treatment.
-- Customers in higher uplift deciles (5-9) perform better when treated who would not have converted but were positively impacted by the treatment.  
+> **Business Insight:** Treating the entire population is inefficient. By targeting only the top deciles (Persuadables), we can avoid wasting budget on "Sure Things" and alienating "Sleeping Dogs."
 
-Possible reasons for this outcome: 
-- Random forest might be prone to overfitting especially on this small dataset.
-- T learner approach introduces bias as it uses two different models for treatment and control groups. 
-## Breaking down the Qini Curve
-## XGBoost & Causal Forest
-I will compare the results of XGBoost & Causal Forest with the T-learner approach.
+## 🛠️ Tech Stack
+
+*   **Python:** Core programming language.
+*   **Pandas & NumPy:** Data manipulation and numerical operations.
+*   **Scikit-learn:** Machine learning models (Logistic Regression) and evaluation metrics.
+*   **Matplotlib & Seaborn:** Data visualization.
+
+## 📂 Project Structure
+
+```
+A-B Testing/
+├── data/                   # Dataset files (Raw and Cleaned)
+│   ├── Online Retail.xlsx
+│   ├── Customer.csv
+│   └── cleaned_data.csv
+├── notebooks/              # Jupyter Notebooks
+│   ├── data_cleaning.ipynb       # Data preprocessing
+│   ├── feature_engineering.ipynb # RFM feature creation
+│   ├── AB_Test.ipynb             # A/B Test simulation & analysis
+│   └── T-learner.ipynb           # Uplift modeling (T-Learner)
+├── .venv/                  # Virtual environment
+└── README.md               # Project documentation
+```
+
+## 🗓️ Roadmap
+
+- [ ] **Advanced Models:** Implement **XGBoost** and **Causal Forest** for more robust uplift estimation.
+- [ ] **Evaluation:** Plot Qini curves and calculate Qini coefficients to quantify model performance.
+- [ ] **Feature Engineering:** meaningful feature creation beyond basic RFM.
+- [ ] **Deployment:** Create a simple API to serve uplift predictions.
+
+## 💻 Usage
+
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd A-B-Testing
+    ```
+2.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt 
+    # (Note: manually install pandas, numpy, scikit-learn, openpyxl if requirements.txt is missing)
+    ```
+3.  **Run the notebooks:**
+    Start with `data_cleaning.ipynb`, then `feature_engineering.ipynb`, followed by the analysis notebooks.
+
+---
+*Created for portfolio demonstration*
